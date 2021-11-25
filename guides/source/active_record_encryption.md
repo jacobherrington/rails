@@ -23,7 +23,7 @@ Active Record Encryption exists to protect sensitive information in your applica
 
 As an immediate practical benefit, encrypting sensitive attributes adds an additional security layer. For example, if an attacker gained access to your database, a snapshot of it, or your application logs, they wouldn't be able to make sense of the encrypted information. Additionally, encryption can prevent developers from unintentionally exposing users' sensitive data in application logs.
 
-But more importantly, by using Active Record Encryption, you define what constitutes sensitive information in your application at the code level. Active Record Encryption enables granular control regarding data access in your application and services consuming data from your application. For example, consider auditable Rails consoles that protect encrypted data or check the built-in system to [filter controller params automatically](#filtering-params-named-as-encrypted-columns).
+But more importantly, by using Active Record Encryption, you define what constitutes sensitive information in your application at the code level. Active Record Encryption enables granular control of data access in your application and services consuming data from your application. For example, consider auditable Rails consoles that protect encrypted data or check the built-in system to [filter controller params automatically](#filtering-params-named-as-encrypted-columns).
 
 ## Basic Usage
 
@@ -66,11 +66,11 @@ But, under the hood, the executed SQL looks like this:
 INSERT INTO `articles` (`title`) VALUES ('{\"p\":\"n7J0/ol+a7DRMeaE\",\"h\":{\"iv\":\"DXZMDWUKfp3bg/Yu\",\"at\":\"X1/YjMHbHD4talgF9dt61A==\"}}')
 ```
 
-Because Base 64 encoding and additional metadata are stored with the values, encryption requires extra space. You can estimate the worst-case overload at around 250 bytes when the built-in envelope encryption key provider is used. This overload is negligible for medium and large text columns, but for `string` columns of 255 bytes, you should increase their limit accordingly (510 is recommended).
+Because Base 64 encoding and metadata are stored with the values, encryption requires extra space in the column. You can estimate the worst-case overload at around 250 bytes when the built-in envelope encryption key provider is used. This overload is negligible for medium and large text columns, but for `string` columns of 255 bytes, you should increase their limit accordingly (510 bytes is recommended).
 
 ### Deterministic and Non-deterministic Encryption
 
-By default, Active Record Encryption uses a non-deterministic approach to encryption. Non-deterministic, in this context, means that encrypting the same content with the same password twice will result in different ciphertexts. This approach makes crypto-analysis of encrypted content much harder, improving security, but it also makes querying the database impossible.
+By default, Active Record Encryption uses a non-deterministic approach to encryption. Non-deterministic, in this context, means that encrypting the same content with the same password twice will result in different ciphertexts. This approach improves security by making crypto-analysis of ciphertexts harder, and querying the database impossible.
 
 You can use the `deterministic:`  option to generate initialization vectors in a deterministic way, effectively enabling querying encrypted data.
 
@@ -138,7 +138,7 @@ end
 
 ### Ignoring Case
 
-You might need to ignore casing when querying deterministically encrypted data. Two approaches make accomplishing this easier.
+You might need to ignore casing when querying deterministically encrypted data. Two approaches make accomplishing this easier:
 
 You can use the `:downcase` option when declaring the encrypted attribute to downcase the content before encryption occurs.
 
@@ -167,7 +167,7 @@ To ease migrations of unencrypted data, the library includes the option `config.
 
 ### Support for Previous Encryption Schemes
 
-Changing encryption properties of attributes can break existing data. For example, imagine you want to make a "deterministic" attribute "not deterministic." If you just change the declaration in the model, reading existing ciphertexts will fail because they are different now.
+Changing encryption properties of attributes can break existing data. For example, imagine you want to make a deterministic attribute non-deterministic. If you just change the declaration in the model, reading existing ciphertexts will fail because the encryption method is different now.
 
 To support these situations, you can declare previous encryption schemes that will be used in two scenarios:
 
@@ -221,7 +221,7 @@ class Person
 end
 ```
 
-They will also work when combining encrypted and unencrypted data and when configuring previous encryption schemes.
+They will also work when combining encrypted and unencrypted data,git and when configuring previous encryption schemes.
 
 NOTE: If you want to ignore case, make sure to use `downcase:` or `ignore_case:` in the `encrypts` declaration. Using the `case_sensitive:` option in the validation won't work.
 
@@ -266,7 +266,7 @@ config.active_record.encryption.forced_encoding_for_deterministic_encryption = n
 
 ## Key Management
 
-Key providers implement key management strategies. You can configure key providers globally or on a per attribute basis.
+Key providers implement key management strategies. You can configure key providers globally, or on a per attribute basis.
 
 ### Built-in Key Providers
 
@@ -430,7 +430,7 @@ The available config options are:
 | `key_derivation_salt`                                        | The salt used when deriving keys. It's preferred to configure it via a credential `active_record_encryption.key_derivation_salt`. |
 | `forced_encoding_for_deterministic_encryption` | The default encoding for attributes encrypted deterministically. You can disable forced encoding by setting this option to `nil`. It's `Encoding::UTF_8` by default. |
 
-NOTE: It's recommended to use Rails built-in credentials support to store keys. If you prefer to set them manually via config properties, make sure you don't commit them with your code (e.g., use environment variables).
+NOTE: It's recommended to use Rails built-in credentials support to store keys. If you prefer to set them manually via config properties, make sure you don't commit them with your code (e.g. use environment variables).
 
 ### Encryption Contexts
 
@@ -498,4 +498,4 @@ ActiveRecord::Encryption.protecting_encrypted_data do
    ...
 end
 ```
-This can be handy if you want to protect encrypted data while still running arbitrary code against it (e.g., in a Rails console).
+This can be handy if you want to protect encrypted data while still running arbitrary code against it (e.g. in a Rails console).
